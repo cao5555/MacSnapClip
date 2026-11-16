@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Validate scripts
+        run: |
+          /bin/zsh -n Install.command
+          /bin/zsh -n Uninstall.command
+          osacompile -o "$RUNNER_TEMP/MacSnapClip.scpt" Sources/MacSnapClip.applescript
+
+      - name: Build release archive
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import zipfile
+
+          root = Path.cwd()
+          tag = os.environ["GITHUB_REF_NAME"]
+          files = [
+              "Install.command",
+              "Uninstall.command",
+              "LICENSE",
+              "README.md",
+              "VERSION",
+              "Sources/MacSnapClip.applescript",
+          ]
+          output = root / "dist" / f"MacSnapClip-{tag}-macos.zip"
+          output.parent.mkdir(parents=True, exist_ok=True)
+          with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
+              for file_name in files:
+                  archive.write(root / file_name, "MacSnapClip/" + file_name)
+          PY
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          shasum -a 256 "dist/MacSnapClip-$GITHUB_REF_NAME-macos.zip" > "dist/MacSnapClip-$GITHUB_REF_NAME-macos.zip.sha256"
+          gh release create "$GITHUB_REF_NAME" \
+            "dist/MacSnapClip-$GITHUB_REF_NAME-macos.zip" \
+            "dist/MacSnapClip-$GITHUB_REF_NAME-macos.zip.sha256" \
+            --title "MacSnapClip $GITHUB_REF_NAME" \
+            --notes "Native macOS screenshot-to-clipboard automation. See README.md for installation and permissions." \
+            --verify-tag
