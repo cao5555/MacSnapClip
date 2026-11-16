@@ -16,6 +16,12 @@ A lightweight macOS Folder Action that automatically copies newly saved screensh
 - macOS with Screenshot, Folder Actions, AppleScript, and `sips` support.
 - Permission to control System Events when attaching the Folder Action.
 
+## Compatibility
+
+- Tested on a physical Apple Silicon Mac.
+- Intel Macs have not yet been tested on physical hardware. However, the script-based implementation is architecture-independent and is expected to work on both Apple Silicon and Intel Macs.
+- System Events, Automation, and Folder Actions permissions must be allowed when requested by macOS.
+
 ## Installation
 
 1. Press **Shift-Command-5**, open **Options** in the Screenshot toolbar, and choose a destination folder under **Save to**.
